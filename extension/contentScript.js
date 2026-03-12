@@ -121,7 +121,7 @@
       'America/Tegucigalpa','America/Managua','America/El_Salvador','America/Belize',
     ];
     for (var i = 0; i < LATAM_PREFIXES.length; i++) {
-      if (tz.indexOf(LATAM_PREFIXES[i]) === 0) return 'latin-america';
+      if (tz.indexOf(LATAM_PREFIXES[i]) === 0) return 'latin-america-and-caribbean';
     }
     if (tz.indexOf('America') === 0 || tz.indexOf('US/') === 0) return 'north-america';
     if (tz.indexOf('Asia')    === 0) return 'asia';
