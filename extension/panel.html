@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoGenAI</title>
+    <link rel="stylesheet" href="./panel.css" />
+  </head>
+  <body>
+    <div class="wrap">
+
+      <header class="header">
+        <div class="header-left">
+          <div class="globe-icon">&#127757;</div>
+          <div class="header-text">
+            <div class="subtitle">GenAI Environmental Estimates</div>
+          </div>
+        </div>
+        <button class="full-report" type="button" id="exportBtn" title="Download a CSV of this session's estimates (turn-by-turn + totals).">Full Report &#8595;</button>
+      </header>
+
+      <p class="disclaimer-top">Estimates only; numbers are approximate and intended to support awareness, not precision. Current estimates cover text-based prompts only; <strong>image generation</strong> is not included.</p>
+      <p class="disclaimer-top">&#9888;&#65039; Session data is lost on page refresh. Save your results using <strong>Full Report</strong> before leaving.</p>
+
+
+      <section class="hero" id="heroSection">
+        <div class="hero-left">
+          <div class="hero-main">
+            <div class="hero-label tooltip-anchor" tabindex="0" aria-label="Total impact for prompts sent in this chat session (updates after each prompt).">SESSION TOTAL</div>
+            <div class="hero-values">
+              <div class="hero-value-row">
+                <span class="hero-value-icon">&#127787;&#65039;</span>
+                <span id="sessionTotalValue">0.000</span>
+                <span class="hero-unit">g CO2e</span>
+              </div>
+              <div class="hero-value-row">
+                <span class="hero-value-icon">&#9889;</span>
+                <span id="sessionEnergyValue">0.000</span>
+                <span class="hero-unit">Wh</span>
+              </div>
+              <div class="hero-value-row">
+                <span class="hero-value-icon">&#128167;</span>
+                <span id="sessionWaterValue">0.00</span>
+                <span class="hero-unit">ml</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="hero-prompts"><span id="sessionUsage">0 prompts</span></div>
+          <div class="hero-goal">
+            <span class="tooltip-anchor tooltip-anchor-light" tabindex="0"
+                  aria-label="Daily ICT carbon budget derived as: 2.3&nbsp;tCO&#x2082;e/year (1.5&deg;C-aligned per-capita target, Gore&nbsp;et&nbsp;al.&nbsp;2021, IEEP/SEI&nbsp;for&nbsp;Oxfam) &times;&nbsp;1.7% ICT sector share (ITU&nbsp;&amp;&nbsp;World&nbsp;Bank,&nbsp;2024, conservative floor) &divide;&nbsp;365&nbsp;days&nbsp;=&nbsp;107&nbsp;g&nbsp;CO&#x2082;e/day. Covers the full ICT footprint per person (networks, devices, data centres); GenAI is one activity within this budget.">Daily budget:</span>
+            <span id="sessionGoal">107g CO2e</span>
+          </div>
+        </div>
+        <div class="hero-analogy" id="sessionAnalogyBox">
+          <span class="hero-analogy-icon" id="sessionAnalogyIcon">&#128241;</span>
+          <span id="sessionAnalogyText">Today you could have&hellip; (send a prompt to see)</span>
+        </div>
+      </section>
+
+   
+      <section class="settings-section">
+
+
+        <div class="settings-row">
+          <label class="settings-label">
+            Location
+            <span class="tooltip-anchor" tabindex="0"
+                  aria-label="Choose how carbon and water coefficients are calculated. Provider Location uses data-centre specific values from Jegham et al. (2025) — more accurate for cloud-hosted models. Your Region uses your local electricity grid intensity from Ember Climate (2024) and Li et al. (2023) — more personally relevant.">&#8853;</span>
+          </label>
+          <div class="region-toggle-wrap">
+            <button type="button" class="toggle-opt active" id="locationProvider" aria-pressed="true">Provider Location</button>
+            <button type="button" class="toggle-opt" id="locationUserRegion" aria-pressed="false">Your Region</button>
+          </div>
+        </div>
+
+
+        <div class="settings-row" id="providerRow">
+          <div class="settings-label">Provider</div>
+          <div class="context-value dim" id="providerLabel">Auto-detected from model</div>
+        </div>
+
+
+        <div class="settings-row" id="regionRow" style="display:none">
+          <label class="settings-label">Region</label>
+          <div class="region-toggle-wrap">
+            <button type="button" class="toggle-opt active" id="regionAuto" aria-pressed="true">Automatic (Detected)</button>
+            <button type="button" class="toggle-opt" id="regionChoose" aria-pressed="false">Choose region</button>
+          </div>
+          <select class="settings-select" id="regionSelect" disabled aria-label="Manual region selection">
+            <option value="europe">Europe</option>
+            <option value="north-america">North America</option>
+            <option value="asia">Asia (Higher Carbon)</option>
+            <option value="middle-east">Middle East (High Carbon)</option>
+            <option value="africa">Africa</option>
+            <option value="latin-america-and-caribbean">Latin America &amp; Caribbean</option>
+            <option value="unknown" selected>World (global average grid)</option>
+          </select>
+        </div>
+
+      </section>
+
+
+      <section class="context">
+        <div class="context-row">
+          <div class="context-label">Location</div>
+          <div class="context-value" id="regionLabel">Waiting for prompt&hellip;</div>
+        </div>
+        <div class="context-row">
+          <div class="context-label">Model</div>
+          <div class="context-value" id="modelLabel">Waiting for prompt&hellip;</div>
+        </div>
+        <div class="context-row">
+          <div class="context-label">Complexity</div>
+          <div class="context-value" id="contextComplexity">Waiting for prompt&hellip;</div>
+        </div>
+        <p class="context-complexity-help">Automatically detected from your prompt. Simple (quick questions), Medium (summarisation), Complex (reasoning/multi-step).</p>
+      </section>
+
+      <section class="results-header">
+        <h2 class="results-title results-title-accent">Impact of last prompt</h2>
+        <p class="results-subtitle">Updated after each message you send</p>
+      </section>
+
+      <section class="cards">
+
+        <div class="card" data-card="carbon">
+          <button class="cardHeader" type="button" aria-expanded="true">
+            <span class="cardHeader-main">
+              <span class="cardIcon cardIcon-carbon">&#127787;</span>
+              <span class="cardHeader-text">
+                <span class="cardTitle">Carbon Footprint</span>
+                <span class="cardValue">
+                  <span id="carbonValue">Waiting for prompt&hellip;</span>
+                  <span class="unit">g CO2e</span>
+                </span>
+              </span>
+            </span>
+          </button>
+          <div class="cardBody">
+            <div class="range-section">
+              <div class="range-label">Estimated range</div>
+              <div class="range-spectrum" id="carbonSpectrum">
+                <span class="range-min" id="carbonMin">&mdash;</span>
+                <span class="range-mid">|</span>
+                <span class="range-estimate" id="carbonEst">Point: &mdash;</span>
+                <span class="range-mid">|</span>
+                <span class="range-max" id="carbonMax">&mdash;</span>
+              </div>
+              <div class="range-text" id="carbonRange">Estimated range: &mdash;&ndash;&mdash; g CO2e (point estimate: &mdash;).</div>
+            </div>
+            <div class="cardBody-expanded">
+              <div class="analogy analogy-carbon" id="carbonAnalogyBox">
+                <span class="analogy-icon" id="carbonAnalogyIcon">&#128241;</span>
+                <span id="carbonAnalogyText">Analogy unavailable</span>
+              </div>
+              <details class="why-range">
+                <summary>Why the range?</summary>
+                <p>Carbon uncertainty compounds energy estimation error with variability in the provider's reported carbon intensity factor (CIF), which shifts with grid conditions and reporting period. ±30% band based on Jegham et al. (2025) §4 sensitivity analysis.</p>
+              </details>
+              <div class="callout callout-carbon">
+                <span class="callout-icon">i</span>
+                <p class="callout-text" id="carbonMeta">CO2 emissions estimated using provider-specific energy intensity and carbon intensity factor (CIF) from Jegham et al. (2025).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="card" data-card="energy">
+          <button class="cardHeader" type="button" aria-expanded="false">
+            <span class="cardHeader-main">
+              <span class="cardIcon cardIcon-energy">&#9889;</span>
+              <span class="cardHeader-text">
+                <span class="cardTitle">Energy Consumption</span>
+                <span class="cardValue">
+                  <span id="energyValue">Waiting for prompt&hellip;</span>
+                  <span class="unit">Wh</span>
+                </span>
+              </span>
+            </span>
+          </button>
+          <div class="cardBody">
+            <div class="range-section">
+              <div class="range-label">Estimated range</div>
+              <div class="range-spectrum range-spectrum-amber" id="energySpectrum">
+                <span class="range-min" id="energyMin">&mdash;</span>
+                <span class="range-mid">|</span>
+                <span class="range-estimate" id="energyEst">Point: &mdash;</span>
+                <span class="range-mid">|</span>
+                <span class="range-max" id="energyMax">&mdash;</span>
+              </div>
+              <div class="range-text" id="energyRange">Estimated range: &mdash;&ndash;&mdash; Wh (point estimate: &mdash;).</div>
+            </div>
+            <div class="cardBody-expanded">
+              <div class="analogy analogy-amber" id="energyAnalogyBox">
+                <span class="analogy-icon" id="energyAnalogyIcon">&#128161;</span>
+                <span id="energyAnalogyText">Analogy unavailable</span>
+              </div>
+              <details class="why-range">
+                <summary>Why the range?</summary>
+                <p>Hardware generation, utilisation and data-centre efficiency all change the energy required per token. ±20% band reflects the P25/P75 spread from Jegham et al. (2025) §4.</p>
+              </details>
+              <div class="callout callout-amber">
+                <span class="callout-icon callout-icon-amber">i</span>
+                <p class="callout-text callout-text-amber" id="energyMeta">Includes both GPU compute and an allowance for supporting infrastructure (cooling, networking, storage).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="card" data-card="water">
+          <button class="cardHeader" type="button" aria-expanded="false">
+            <span class="cardHeader-main">
+              <span class="cardIcon cardIcon-water">&#128166;</span>
+              <span class="cardHeader-text">
+                <span class="cardTitle">Water Usage</span>
+                <span class="cardValue">
+                  <span id="waterValue">Waiting for prompt&hellip;</span>
+                  <span class="unit">ml</span>
+                </span>
+              </span>
+            </span>
+          </button>
+          <div class="cardBody">
+            <div class="range-section">
+              <div class="range-label">Estimated range</div>
+              <div class="range-spectrum range-spectrum-blue" id="waterSpectrum">
+                <span class="range-min" id="waterMin">&mdash;</span>
+                <span class="range-mid">|</span>
+                <span class="range-estimate" id="waterEst">Point: &mdash;</span>
+                <span class="range-mid">|</span>
+                <span class="range-max" id="waterMax">&mdash;</span>
+              </div>
+              <div class="range-text" id="waterRange">Estimated range: &mdash;&ndash;&mdash; ml (point estimate: &mdash;).</div>
+            </div>
+            <div class="cardBody-expanded">
+              <div class="analogy analogy-blue" id="waterAnalogyBox">
+                <span class="analogy-icon" id="waterAnalogyIcon">&#128166;</span>
+                <span id="waterAnalogyText">Analogy unavailable</span>
+              </div>
+              <details class="why-range">
+                <summary>Why the range?</summary>
+                <p>Water usage depends heavily on local cooling strategies and seasonal conditions, which are not fully disclosed. ±35% band reflects regional WUE variability from Li et al. (2023).</p>
+              </details>
+              <div class="callout callout-blue">
+                <span class="callout-icon callout-icon-blue">i</span>
+                <p class="callout-text callout-text-blue" id="waterMeta">Estimates water used indirectly in power generation (WUE_source) and directly in on-site cooling (WUE_site), combined per Jegham et al. (2025) Eq. 3.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+
+
+      <section class="tips-box">
+        <button class="tips-toggle" type="button" aria-expanded="false" id="tipsToggle">
+          &#128161; How to reduce your impact &#9656;
+        </button>
+        <div class="tips-content" id="tipsContent" style="display:none">
+          <ul class="tips-list">
+            <li>
+              <span class="tips-list-icon">&#9986;&#65039;</span>
+              <span><strong>Be concise.</strong> Fewer tokens means less energy. Remove filler, greetings, and repeated context — get straight to the point.</span>
+            </li>
+            <li>
+              <span class="tips-list-icon">&#128230;</span>
+              <span><strong>Batch related questions.</strong> One prompt with three questions uses far less energy than three separate prompts, since the fixed infrastructure overhead is paid once.</span>
+            </li>
+            <li>
+              <span class="tips-list-icon">&#127919;</span>
+              <span><strong>Match complexity to the task.</strong> Simple questions don't need reasoning-heavy phrasing. Avoiding words like <em>analyse</em>, <em>step by step</em>, or <em>implement</em> keeps the complexity multiplier at ×1.0 instead of ×1.5 — a 33% energy saving.</span>
+            </li>
+            <li>
+              <span class="tips-list-icon">&#128257;</span>
+              <span><strong>Avoid unnecessary regenerations.</strong> Each "Try again" is a full new inference request. Refining your prompt before sending is cheaper than regenerating after.</span>
+            </li>
+            <li>
+              <span class="tips-list-icon">&#9889;</span>
+              <span><strong>Use a lighter model when possible.</strong> Smaller models (e.g. GPT-4o mini vs GPT-4o) can use significantly less energy for straightforward tasks with comparable results.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="methodology-box">
+        <button class="methodology-toggle" type="button" aria-expanded="false" id="methodologyToggle">
+          How are estimates made? &#9656;
+        </button>
+        <div class="methodology-content" id="methodologyContent" style="display:none">
+          <p> The backend counts tokens using tiktoken.encoding_for_model(...).Frontend model keys are normalised (e.g. gpt-3.5 → gpt-3.5-turbo, chatgpt / gpt-4.1 / gpt-
+            4.5 / gpt-5 → gpt-40 ). If a model is unknown, it falls back to cl100k_base . If raw text is unavailable, the backend uses provided tokens_in / tokens_out</p>
+          <p> The complexity factor is determined by the presence of keywords in the prompt. Simple (quick questions, 1.0), Medium (summarisation, 1.2), Complex (reasoning/multi-step, 1.5). This multiplier scales estimated compute before energy, carbon,
+            and water are derived.</p>
+          <p>Energy is estimated via piecewise-linear interpolation across three measured prompt-size buckets (400, 2,000, and 11,500 tokens) using model-specific Wh values from Jegham et al. (2025). This captures the sub-linear relationship between token count and energy, fixed infrastructure overhead dominates short prompts, while decoding cost dominates long ones.</p>
+          <p>Carbon and water coefficients are sourced per provider data centre (Microsoft Azure, AWS, DeepSeek) from Jegham et al. (2025) Table 1 by default. If <em>Your Region</em> mode is selected, regional grid intensity from Ember Climate (2024) and regional water intensity from Li et al. (2023) are used instead.</p>
+          <p>Where exact energy data for a model is unavailable, the GPT-4o class values are used as a fallback. This is a declared limitation of the estimation approach.</p>
+          <p>Sources: Jegham et al. (2025) arXiv:2505.09598; Ember Climate (2024); Li et al. (2023); Luccioni et al. (2024).</p>
+        </div>
+      </section>
+
+      <section class="footer">
+        <div class="small">Last update: <span id="lastUpdate">&mdash;</span></div>
+        <div class="small dim" id="debugLine">Listening on this page&hellip;</div>
+      </section>
+
+    </div>
+    <script src="./panel.js"></script>
+  </body>
+</html>
