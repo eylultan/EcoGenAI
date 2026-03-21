@@ -5,7 +5,7 @@
   var ANALOGY_BASELINES = {
     carbon: { googleSearch: 0.2, drivingPerKm: 129.4 },  // Google search is 0.2g CO₂e each, driving 129.4km in a car is 1g CO₂e
     energy: { ledWattage: 10, phoneCharge: 20 },        // a modern smartphone ~20 Wh per full charge, a 10W LED bulb is 10Wh
-    water:  { sipMl: 15, glassMl: 240 },                 // a small sip of water is 15ml, a glass of water is 240ml
+    water:  { sipMl: 16, glassMl: 240 },                 // a small sip of water is 16ml, a glass of water is 240ml
   };
 
   var REGION_LABELS = {
@@ -312,7 +312,12 @@
     if (meta.complexity) {
       var cat   = meta.complexity;
       var fac   = meta.complexity_factor;
-      var label = cat.charAt(0).toUpperCase() + cat.slice(1);
+      var labelMap = {
+        simple: 'Simple',
+        summarisation: 'Medium',
+        reasoning: 'High',
+      };
+      var label = labelMap[cat] || (cat.charAt(0).toUpperCase() + cat.slice(1));
       var full  = label + (typeof fac === 'number' ? ' (\u00d7' + fac + ')' : '');
       if (els.contextComplexity) els.contextComplexity.textContent = full;
       if (els.autoComplexity)    els.autoComplexity.textContent    = full;
